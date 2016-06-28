@@ -15,6 +15,7 @@
 #include "../lib/p2psp/src/core/splitter_acs.h"
 #include "../lib/p2psp/src/core/splitter_lrs.h"
 #include "../lib/p2psp/src/core/splitter_nts.h"
+#include "../lib/p2psp/src/core/splitter_strpeds.h"
 #include <boost/program_options/parsers.hpp>
 #include <boost/program_options/variables_map.hpp>
 #include <signal.h>
@@ -180,8 +181,8 @@ int main(int argc, const char *argv[]) {
   }
 
   is_IMS_only = false;
-  if (vm.count("strpe")) {
-    //splitter_ptr.reset(new p2psp::SplitterSTRPE());
+  if (vm.count("strpeds")) {
+    splitter_ptr.reset(new p2psp::SplitterSTRPEDS());
   } else if (vm.count("NTS")) {
     splitter_ptr.reset(new p2psp::SplitterNTS());
   } else if (vm.count("LRS")) {
@@ -237,15 +238,26 @@ int main(int argc, const char *argv[]) {
     splitter_dbs->SetMaxNumberOfMonitors(vm["max_number_of_monitors"].as<int>());
   }
 
-  // Parameters if STRPE
-  /*
-  if (HasParameter(vm, "strpe_log", p2psp::Common::kSTRPE)) {
-    std::shared_ptr<p2psp::SplitterSTRPE> splitter_strpe =
-      std::static_pointer_cast<p2psp::SplitterSTRPE>(splitter_ptr);
-    splitter_strpe->SetLogging(true);
-    splitter_strpe->SetLogFile(vm["strpe_log"].as<std::string>());
+  // Parameters if STRPEDS
+  
+  if (HasParameter(vm, "strpeds_log", p2psp::Common::kSTRPE)) {
+    std::shared_ptr<p2psp::SplitterSTRPEDS> splitter_strpeds =
+      std::static_pointer_cast<p2psp::SplitterSTRPEDS>(splitter_ptr);
+    splitter_strpeds->SetLogging(true);
+    splitter_strpeds->SetLogFile(vm["strpeds_log"].as<std::string>());
   }
-  */
+
+  if (HasParameter(vm, "p_mpl", p2psp::Common::kSTRPE)) {
+    std::shared_ptr<p2psp::SplitterSTRPEDS> splitter_strpeds =
+      std::static_pointer_cast<p2psp::SplitterSTRPEDS>(splitter_ptr);
+    splitter_strpeds->SetPMPL(vm["p_mpl"].as<int>());
+  }
+  if (HasParameter(vm, "p_tpl", p2psp::Common::kSTRPE)) {
+    std::shared_ptr<p2psp::SplitterSTRPEDS> splitter_strpeds =
+      std::static_pointer_cast<p2psp::SplitterSTRPEDS>(splitter_ptr);
+    splitter_strpeds->SetPTPL(vm["p_tpl"].as<int>());
+  }
+  
   splitter_ptr->Start();
 
   LOG("         | Received  | Sent      | Number       losses/ losses");

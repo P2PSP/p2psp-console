@@ -19,6 +19,7 @@
 #include "../lib/p2psp/src/core/peer_ims.h"
 #include "../lib/p2psp/src/core/peer_nts.h"
 #include "../lib/p2psp/src/core/peer_symsp.h"
+#include "../lib/p2psp/src/core/peer_strpeds.h"
 //#include "peer_strpeds.h"
 //#include "peer_strpeds_malicious.h"
 //#include "trusted_peer.h"
@@ -107,12 +108,12 @@ namespace p2psp {
         ("use_localhost",
          "Forces the peer to use localhost instead of the IP of the adapter to connect to the splitter."
          "Notice that in this case, peers that run outside of the host will not be able to communicate with this peer.")
-        //"malicious",
-        // boost::program_options::value<bool>()->implicit_value(true),
-        //"Enables the malicious activity for peer.")(
-        //("persistent",
-        // boost::program_options::value<std::string>()->default_value(persistent),
-        // "Forces the peer to send poisoned chunks to other peers.")
+        ("malicious",
+         boost::program_options::value<bool>()->implicit_value(true),
+        "Enables the malicious activity for peer.")
+        ("persistent",
+        /boost::program_options::value<bool>()->implicit_value(true),
+         "Forces the peer to send poisoned chunks to other peers.")
         //("on_off_ratio",
         // boost::program_options::value<int>()->default_value(on_off_ratio),
         // "Enables on-off attack and sets ratio for on off (from 1 to 100).")
@@ -153,7 +154,7 @@ namespace p2psp {
       return 1;
     }
 
-    std::unique_ptr<p2psp::PeerDBS> peer;
+    std::unique_ptr<p2psp::PeerIMS> peer;
 
     if (vm.count("monitor")) {
       // Monitor enabled
@@ -166,6 +167,7 @@ namespace p2psp {
       }
       peer.reset(peer_ptr);
     }
+    
     peer->Init();
 
     if (vm.count("show_buffer")) {
@@ -219,10 +221,25 @@ namespace p2psp {
       if (vm.count("checkall")) {
       peer->SetCheckAll(true);
       }
+  }*/
 
-      if (vm.count("strpe_log")) {
-      // TODO: Handle logging
-      }*/
+    if (vm.count("malicious") {
+	peer.FirstMainTarget();
+
+	if (vm.count("persistent")){
+	  peer.SetPersistentAttack(true);
+	}
+
+	if (vm.count("mptr")){
+	  peer->SetMPTR(vm["mptr"].as<int>());
+	}
+	    
+    }
+    
+    if (vm.count("strpeds_log")) {
+      peer->SetLogging(true);
+      peer->SetLogFile(vm["strpeds_log"].as<std::string>());
+    }
 
     peer->WaitForThePlayer();
     peer->ConnectToTheSplitter();
@@ -237,7 +254,7 @@ namespace p2psp {
     if (peer->GetMcastAddr().to_string() == "0.0.0.0") {
       peer->ReceiveMyEndpoint();
       peer->ReceiveMagicFlags();
-      // LOG("Magic flags =" << std::bitset<8>(peer->magic_flags));
+      // LOG("Magic flags =" << std::bitset<8>(peer->magic_flags));      
       peer->ReceiveTheNumberOfPeers();
       LOG("Number of peers in the team (excluding me) ="
           << std::to_string(peer->GetNumberOfPeers()));
@@ -245,6 +262,8 @@ namespace p2psp {
       peer->ListenToTheTeam();
       peer->ReceiveTheListOfPeers();
       LOG("List of peers received");
+
+      peer->ReceiveDsaKey();
 
       // After receiving the list of peers, the peer can check whether is a
       // monitor peer or not (only the first arriving peers are monitors)
@@ -260,6 +279,8 @@ namespace p2psp {
         // The peer is a normal peer-> Let's know the sets of rules that control
         // this team.
       }
+
+      
 
     } else {
       // IP multicast mode
