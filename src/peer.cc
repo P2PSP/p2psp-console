@@ -20,6 +20,7 @@
 #include "../lib/p2psp/src/core/peer_nts.h"
 #include "../lib/p2psp/src/core/peer_symsp.h"
 #include "../lib/p2psp/src/core/peer_strpeds.h"
+#include "../lib/p2psp/src/core/peer_strpeds_malicious.h"
 //#include "peer_strpeds.h"
 //#include "peer_strpeds_malicious.h"
 //#include "trusted_peer.h"
@@ -112,8 +113,11 @@ namespace p2psp {
          boost::program_options::value<bool>()->implicit_value(true),
         "Enables the malicious activity for peer.")
         ("persistent",
-        /boost::program_options::value<bool>()->implicit_value(true),
+        boost::program_options::value<bool>()->implicit_value(true),
          "Forces the peer to send poisoned chunks to other peers.")
+	("mptr",
+         boost::program_options::value<int>(),
+         "Number of rounds attacking a peer individually before all attack mode.")
         //("on_off_ratio",
         // boost::program_options::value<int>()->default_value(on_off_ratio),
         // "Enables on-off attack and sets ratio for on off (from 1 to 100).")
@@ -129,11 +133,9 @@ namespace p2psp {
         // "Forces the peer to send hashes of every chunks to splitter (works only with trusted option)")
         // "strpeds", boost::program_options::value<bool>()->implicit_value(true),
         // "Enables STrPe-DS")(
-        //("strpe_log", "Logging STrPe & STrPe-DS specific data to file.")
-        ("monitor",
-         "The peer is a monitor")
-        ("show_buffer",
-         "Shows the status of the buffer of chunks.");
+        ("strpeds_log",  boost::program_options::value<std::string>(), "Logging STrPe & STrPe-DS specific data to file.")
+        ("monitor",  boost::program_options::value<bool>(), "The peer is a monitor")
+        ("show_buffer",  "Shows the status of the buffer of chunks.");
 
     }
 
@@ -154,8 +156,26 @@ namespace p2psp {
       return 1;
     }
 
-    std::unique_ptr<p2psp::PeerIMS> peer;
+    std::unique_ptr<p2psp::PeerSTRPEDS> peer;
+    
 
+    if (vm.count("malicious")) {
+      LOG("Malicious enabled");
+      p2psp::PeerStrpeDsMalicious* peer_ptr = new p2psp::PeerStrpeDsMalicious();
+      if (vm.count("persistent")){
+	peer_ptr->SetPersistentAttack(true);
+      }
+
+      if (vm.count("mptr")){
+	peer_ptr->SetMPTR(vm["mptr"].as<int>());
+      }
+      peer.reset(peer_ptr);
+    }else{
+      p2psp::PeerSTRPEDS* peer_ptr = new p2psp::PeerSTRPEDS();
+      peer.reset(peer_ptr);
+    }
+    
+    /*
     if (vm.count("monitor")) {
       // Monitor enabled
       LOG("Monitor enabled.");
@@ -166,7 +186,8 @@ namespace p2psp {
         peer_ptr->SetPortStep(vm["source_port_step"].as<int>());
       }
       peer.reset(peer_ptr);
-    }
+      }
+    */
     
     peer->Init();
 
@@ -198,42 +219,6 @@ namespace p2psp {
 
     if (vm.count("use_localhost")) {
       peer->SetUseLocalhost(true);
-    }
-
-    // TODO: To the future
-    /*
-      if (vm.count("persistent")) {
-      peer->SetPersistentAttack(true);
-      }
-
-      if (vm.count("on_off_ratio")) {
-      peer->SetOnOffAttack(true, vm["on_off_ratio"].as<int>());
-      }
-
-      if (vm.count("selective")) {
-      peer->SetSelectiveAttack(true, vm["selective"].as<std::string>());
-      }
-
-      if (vm.count("bad_mouth")) {
-      peer->SetBadMouthAttack(true, vm["bad_mouth"].as<std::string>());
-      }
-
-      if (vm.count("checkall")) {
-      peer->SetCheckAll(true);
-      }
-  }*/
-
-    if (vm.count("malicious") {
-	peer.FirstMainTarget();
-
-	if (vm.count("persistent")){
-	  peer.SetPersistentAttack(true);
-	}
-
-	if (vm.count("mptr")){
-	  peer->SetMPTR(vm["mptr"].as<int>());
-	}
-	    
     }
     
     if (vm.count("strpeds_log")) {

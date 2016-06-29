@@ -156,8 +156,14 @@ int main(int argc, const char *argv[]) {
       (
        "strpeds_majority_decision", "Sets majority decision ratio for STrPe-DS model.")
       (
-       "strpe_log", boost::program_options::value<std::string>(),
+       "strpeds_log", boost::program_options::value<std::string>(),
        "Loggin STrPe & STrPe-DS specific data to file.")
+      (
+       "p_mpl", boost::program_options::value<int>(),
+       "probability malicious peer leave")
+      (
+       "p_tpl", boost::program_options::value<int>(),
+       "probability trusted peer leave")
       (
        "TTL", boost::program_options::value<int>()->default_value(TTL),
        "Time To Live of the multicast messages.");
@@ -316,7 +322,7 @@ int main(int argc, const char *argv[]) {
 
           LOG(splitter_dbs->GetLoss(*it) << "/" << chunks_sendto << " "
               << splitter_dbs->GetMaxNumberOfChunkLoss());
-
+	  /*
           if (splitter_dbs->GetMagicFlags() >= p2psp::Common::kACS) { // If is ACS
           // _SET_COLOR(_YELLOW);
             LOG(splitter_acs->GetPeriod(*it));
@@ -325,7 +331,7 @@ int main(int argc, const char *argv[]) {
                  splitter_acs->GetChunkSize() * 8) /
                 1000);
             splitter_acs->SetNumberOfSentChunksPerPeer(*it, 0);
-          }
+	    }*/
         }
       }
     }
