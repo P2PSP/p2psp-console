@@ -21,10 +21,12 @@
 #include <signal.h>
 //#include "../lib/p2psp/src/util/trace.h"
 
+/*
 #define LOG(a)      {}
 #define LOGC(c, a)  {}
 #define ERROR(a)    {}
 #define TRACE(a)    {}
+*/
 
 // TODO: LOG fails if splitter is defined outside the main
 // p2psp::SplitterSTRPE splitter;
@@ -288,14 +290,16 @@ int main(int argc, const char *argv[]) {
   sigIntHandler.sa_flags = 0;
   sigaction(SIGINT, &sigIntHandler, NULL);
 
+  
   std::shared_ptr<p2psp::SplitterDBS> splitter_dbs;
   if (!is_IMS_only) { // GetPeerList is only in DBS and derivated classes
     splitter_dbs = std::static_pointer_cast<p2psp::SplitterDBS>(splitter_ptr);
   }
+  /*
   std::shared_ptr<p2psp::SplitterACS> splitter_acs;
   if (!is_IMS_only && splitter_dbs->GetMagicFlags() >= p2psp::Common::kACS) {
     splitter_acs = std::static_pointer_cast<p2psp::SplitterACS>(splitter_ptr);
-  }
+    }*/
   while (splitter_ptr->isAlive()) {
     boost::this_thread::sleep(boost::posix_time::milliseconds(1000));
     chunks_sendto = splitter_ptr->GetSendToCounter() - last_sendto_counter;
@@ -309,6 +313,7 @@ int main(int argc, const char *argv[]) {
     LOG("|" << kbps_recvfrom << "|" << kbps_sendto << "|");
     // LOG(_SET_COLOR(_CYAN));
 
+    /*
     if (!is_IMS_only) { // GetPeerList is only in DBS and derivated classes
       peer_list = splitter_dbs->GetPeerList();
       LOG("Size peer list: " << peer_list.size());
@@ -322,7 +327,7 @@ int main(int argc, const char *argv[]) {
 
           LOG(splitter_dbs->GetLoss(*it) << "/" << chunks_sendto << " "
               << splitter_dbs->GetMaxNumberOfChunkLoss());
-	  /*
+	  
           if (splitter_dbs->GetMagicFlags() >= p2psp::Common::kACS) { // If is ACS
           // _SET_COLOR(_YELLOW);
             LOG(splitter_acs->GetPeriod(*it));
@@ -331,10 +336,10 @@ int main(int argc, const char *argv[]) {
                  splitter_acs->GetChunkSize() * 8) /
                 1000);
             splitter_acs->SetNumberOfSentChunksPerPeer(*it, 0);
-	    }*/
-        }
+	    }
+       }
       }
-    }
+      }*/
   }
 
   LOG("Ending");

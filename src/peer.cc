@@ -11,6 +11,7 @@
 #include <boost/format.hpp>
 #include <boost/program_options/parsers.hpp>
 #include <boost/program_options/variables_map.hpp>
+#include <csignal>
 #include "../lib/p2psp/src/core/common.h"
 #include "../lib/p2psp/src/core/monitor_dbs.h"
 #include "../lib/p2psp/src/core/monitor_lrs.h"
@@ -26,6 +27,8 @@
 //#include "trusted_peer.h"
 //#include "malicious_peer.h"
 #include "../lib/p2psp/src/util/trace.h"
+
+bool KILL = false;
 
 namespace p2psp {
 
@@ -309,6 +312,10 @@ namespace p2psp {
     int counter = 0;
 
     while (peer->IsPlayerAlive()) {
+      if (KILL){
+	LOG("Killing the player...");
+	peer->SetPlayerAlive(false);
+      }
       boost::this_thread::sleep(boost::posix_time::seconds(1));
       kbps_expected_recv = ((peer->GetPlayedChunk() - last_chunk_number) *
                             peer->GetChunkSize() * 8) / 1000.0f;
@@ -395,8 +402,13 @@ namespace p2psp {
   }
 }
 
+void signalHandler( int signum )
+{
+  KILL = true;
+}
 
 int main(int argc, const char* argv[]) {
+  signal(SIGTERM, signalHandler);
   try {
     return p2psp::run(argc, argv);
   } catch (boost::system::system_error e) {
