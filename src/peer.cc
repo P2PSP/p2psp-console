@@ -74,10 +74,10 @@
 namespace p2psp {
   using namespace std;
   using namespace boost;
-  
+
   class Console:
 
-#if defined __IMS__  
+#if defined __IMS__
     public Peer_IMS
 #endif
 
@@ -96,7 +96,7 @@ namespace p2psp {
     public Peer_DBS
 #endif
 #endif /* __LRS__ */
-  
+
 #if defined __NTS__
 #if defined __monitor__
     public Monitor_NTS
@@ -119,12 +119,12 @@ namespace p2psp {
     // {{{
   protected:
     // {{{
-    
+
     struct Source {
       ip::address addr;
       PORT_TYPE port;
     };
-    
+
     PORT_TYPE player_port_;
     io_service io_service_;
     ip::tcp::acceptor acceptor_;
@@ -138,7 +138,7 @@ namespace p2psp {
     // }}}
   public:
     // {{{
-    
+
     Console() : io_service_(),
 		acceptor_(io_service_),
 		source_socket_(io_service_),
@@ -159,9 +159,9 @@ namespace p2psp {
 
       boost::array<char, 6> buffer;
       read(splitter_socket_, ::buffer(buffer));
-      
+
       char *raw_data = buffer.data();
-      
+
       in_addr ip_raw = *(in_addr *)(raw_data);
       source.addr = ip::address::from_string(inet_ntoa(ip_raw));
       source.port = ntohs(*(short *)(raw_data + 4));
@@ -175,15 +175,15 @@ namespace p2psp {
 
     ip::address GetSourceAddr() {
       // {{{
-      
+
       return source.addr;
 
       // }}}
     }
-    
+
     PORT_TYPE GetSourcePort() {
       // {{{
-      
+
       return source.port;
 
       // }}}
@@ -191,7 +191,7 @@ namespace p2psp {
 
     void SetGETMessage() {
       // {{{
-      
+
       std::stringstream ss;
       ss << "GET /" << channel_ << " HTTP/1.1\r\n"
 	 << "\r\n";
@@ -216,7 +216,7 @@ namespace p2psp {
       {
 	std::vector<char> messagex(channel_size);
 	boost::asio::read(splitter_socket_, boost::asio::buffer(messagex/*, channel_size*/));
-      
+
 	channel_ = std::string(messagex.data(), channel_size);
       }
       TRACE("channel = "
@@ -230,7 +230,7 @@ namespace p2psp {
       // {{{
 
       return channel_;
-      
+
       // }}}
     }
 
@@ -239,9 +239,9 @@ namespace p2psp {
 
       boost::array<char, 2> buffer;
       read(splitter_socket_, ::buffer(buffer));
-      
+
       header_size_ = ntohs(*(short *)(buffer.c_array()));
-      
+
       TRACE("header_size (in bytes) = "
 	    << std::to_string(header_size_));
       // }}}
@@ -249,12 +249,12 @@ namespace p2psp {
 
     HEADER_SIZE_TYPE GetHeaderSize() {
       // {{{
-      
+
       return header_size_;
 
       // }}}
     }
-    
+
     void ConnectToTheSource() throw(boost::system::system_error) {
       // {{{
 
@@ -283,12 +283,12 @@ namespace p2psp {
     }
 
     void RequestHeader() {
-      source_socket_.send(asio::buffer(GET_message_));      
+      source_socket_.send(asio::buffer(GET_message_));
     }
-    
+
     void RelayHeader() {
       // {{{
-            
+
       boost::array<char, 128> buf;
       //boost::system::error_code error;
       for(int header_load_counter_ = 0; header_load_counter_ < GetHeaderSize();) {
@@ -302,13 +302,33 @@ namespace p2psp {
 	player_socket_.send(boost::asio::buffer(buf,len));
 	//boost::asio::write(socket, boost::asio::buffer(message), ignored_error);
       }
-      
+
       // }}}
     }
-    
+
+    void RelayHeaderFromSplitter() {
+      // {{{
+
+      const auto headerSize = GetHeaderSize();
+      std::vector<char> buf(headerSize);
+      boost::system::error_code error;
+
+      const auto len
+         = boost::asio::read(splitter_socket_, boost::asio::buffer(buf),
+                       boost::asio::transfer_exactly(headerSize), error);
+
+      if(error || (len < header_size_)) {
+        ERROR(error.message());
+        exit(-1);
+      }
+      player_socket_.send(boost::asio::buffer(buf, buf.size()));
+
+      // }}}
+    }
+
     void WaitForThePlayer() {
       // {{{
-      
+
       ip::tcp::endpoint endpoint(ip::tcp::v4(), player_port_);
 
       acceptor_.open(endpoint.protocol());
@@ -349,23 +369,23 @@ namespace p2psp {
 
       // }}}
     }
-    
+
     void SetPlayerPort(uint16_t player_port) {
       // {{{
-      
+
       player_port_ = player_port;
-      
+
       // }}}
     }
 
     uint16_t GetPlayerPort() {
       // {{{
-      
+
       return  player_port_;
-      
+
       // }}}
     }
-      
+
     static uint16_t GetDefaultPlayerPort() {
       // {{{
 
@@ -376,7 +396,7 @@ namespace p2psp {
 
     // }}}
   };
-  
+
   int run(int argc, const char* argv[]) throw(boost::system::system_error) {
     // {{{
 
@@ -412,6 +432,7 @@ namespace p2psp {
 #endif
         ("splitter_addr", boost::program_options::value<std::string>()->default_value(splitter_addr), "IP address or hostname of the splitter.")
         ("splitter_port", boost::program_options::value<uint16_t>()->default_value(splitter_port), "Listening port of the splitter.")
+        ("smart_source_client", boost::program_options::value<bool>()->default_value(false), "Connect to smart Source Client")
 #if not defined __IMS__
         ("team_port", boost::program_options::value<uint16_t>()->default_value(team_port), "Port to communicate with the peers. By default the OS will chose it.")
         ("use_localhost", "Forces the peer to use localhost instead of the IP of the adapter to connect to the splitter." "Notice that in this case, peers that run outside of the host will not be able to communicate with this peer.")
@@ -437,13 +458,12 @@ namespace p2psp {
       return 1;
     }
 
-
     // }}}
 
 #if defined __IMS__
     std::cout << "Using Peer_IMS" << std::endl;
 #endif
-    
+
 #if defined __DBS__ || defined __ACS__
 #if defined __monitor__
     std::cout << "Using Monitor_DBS" << std::endl;
@@ -459,7 +479,7 @@ namespace p2psp {
     std::cout << "Using Peer_DBS" << std::endl;
 #endif
 #endif /* __LRS__ */
-    
+
 #if defined __NTS__
 #if defined __monitor__
     std::cout << "Using Monitor_NTS" << std::endl;
@@ -477,10 +497,17 @@ namespace p2psp {
 #endif /* __EMS__ */
 
     // {{{ Peer instantiation
-    
+
     class Console* peer = new Console();
 
     // }}}
+
+    if (vm.count("smart_source_client")) {
+      // {{{
+      peer->setSmartSourceClient(vm["smart_source_client"].as<bool>());
+      TRACE("smart_source_client = " << peer->isSmartSourceClient());
+      // }}}
+    }
 
     if (vm.count("player_port")) {
       // {{{
@@ -488,7 +515,7 @@ namespace p2psp {
       peer->SetPlayerPort(vm["player_port"].as<uint16_t>());
       TRACE("Player port = "
 	  << peer->GetPlayerPort());
-      
+
       // }}}
     }
 
@@ -503,20 +530,20 @@ namespace p2psp {
       peer->SetSplitterAddr(ip::address::from_string(vm["splitter_addr"].as<std::string>()));
       TRACE("Splitter address = "
 	    << peer->GetSplitterAddr());
-      
+
       // }}}
     }
 
     if (vm.count("splitter_port")) {
       // {{{
-      
+
       peer->SetSplitterPort(vm["splitter_port"].as<uint16_t>());
       TRACE("Splitter port = "
 	  << peer->GetSplitterPort());
-      
+
       // }}}
     }
-    
+
     peer->ConnectToTheSplitter();
     TRACE("Connected to the splitter");
     /*std::cout
@@ -530,82 +557,77 @@ namespace p2psp {
 	  << ","
 	  << std::to_string(peer->GetSourcePort())
 	  << ")");
-    
-    peer->ConnectToTheSource();
-    TRACE("Connected to the source");
-    
+
+    if(peer->isSmartSourceClient() == false) {
+      peer->ConnectToTheSource();
+      TRACE("Connected to the source");
+    }
+
     peer->ReceiveChannel();
     TRACE("channel = "
 	  << peer->GetChannel());
-    
+
     peer->ReceiveHeaderSize();
     TRACE("Header size = "
 	  << peer->GetHeaderSize());
-    
-    peer->RequestHeader();
-    TRACE("Header requested");
 
-    std::cout << "Relaying the header from the source to the player ... " << std::flush;
-    peer->RelayHeader();
-    std::cout << "done" << std::endl;
-    
     peer->ReceiveChunkSize();
     TRACE("Chunk size = "
 	  << peer->GetChunkSize());
-    
+
     peer->ReceiveBufferSize();
     TRACE("Buffer size = "
 	  << peer->GetBufferSize());
-    
+
 #if defined __IMS__
     // {{{
-    
+
     peer->ReceiveMcastGroup();
     TRACE("Using IP multicast group = ("
 	  << peer->GetMcastAddr().to_string()
 	  << ","
 	  << peer->GetMcastPort()
 	  << ")");
-    
+
     // }}}
 
 #else /* __IMS__ */
-    
+
     // {{{
 
     if (vm.count("max_chunk_debt")) {
       // {{{
-      
+
       peer->SetMaxChunkDebt(vm["max_chunk_debt"].as<int>());
       TRACE("Maximum chunk debt = "
 	    << peer->GetMaxChunkDebt());
-      
+
       // }}}
     }
 
     if (vm.count("team_port")) {
       // {{{
-      
+
       peer->SetTeamPort(vm["team_port"].as<uint16_t>());
       TRACE("team_port = "
 	    << peer->GetTeamPort());
-      
+
       // }}}
     }
 
     if (vm.count("use_localhost")) {
       // {{{
-      
+
       peer->SetUseLocalHost(true);
       TRACE("use_localhost = "
 	    << peer->GetUseLocalHost());
-      
+
       // }}}
     }
 
     // }}}
 #endif /* __IMS__*/
-    
+
 #if defined __NTS__
 # if not defined __monitor__
     // {{{
@@ -615,34 +637,47 @@ namespace p2psp {
     }
     TRACE("Source port step = "
 	  << peer->GetPortStep());
-    
+
     // }}}
 #endif
 #endif
 
-    peer->Init();    
+    peer->Init();
     peer->ListenToTheTeam();
     TRACE("Listening to the team");
-    
+
 #if not defined __IMS__
     // {{{
-    
+
     TRACE("Receiving the list of peers ... ");
     peer->ReceiveTheListOfPeers();
     std::cout << "done" << std::endl;
     TRACE("List of peers received");
     TRACE("Number of peers in the team (excluding me) = "
-	<< std::to_string(peer->GetNumberOfPeers()));    
-    
+	<< std::to_string(peer->GetNumberOfPeers()));
+
     // }}}
-#endif    
+#endif
+
+    if(peer->isSmartSourceClient()) {
+      std::cout << "Relaying the header from the splitter to the player ... " << std::flush;
+      peer->RelayHeaderFromSplitter();
+      std::cout << "done" << std::endl;
+    } else {
+      peer->RequestHeader();
+      TRACE("Header requested");
+
+      std::cout << "Relaying the header from the source to the player ... " << std::flush;
+      peer->RelayHeader();
+      std::cout << "done" << std::endl;
+    }
 
     peer->SendReadyForReceivingChunks();
-    
+
     peer->DisconnectFromTheSplitter();
     TRACE("Recived the configuration from the splitter.");
     TRACE("Clossing the connection");
-    
+
     std::cout
       << "Buffering ... "
       << std::endl << std::flush; {
@@ -651,7 +686,7 @@ namespace p2psp {
       //auto start = std::chrono::steady_clock::now();
       peer->BufferData();
       std::chrono::steady_clock::time_point end= std::chrono::steady_clock::now();
-      /*auto duration = std::chrono::duration_cast<std::chrono::milliseconds> 
+      /*auto duration = std::chrono::duration_cast<std::chrono::milliseconds>
 	(std::chrono::steady_clock::now() - start);*/
       std::cout << "done" << std::endl;
       std::cout
@@ -665,7 +700,7 @@ namespace p2psp {
     std::cout << _RESET_COLOR();
 
 #if defined __IMS__
-    
+
     std::cout << "                     | Received |     Sent |" << std::endl;
     std::cout << "                Time |   (kbps) |   (kbps) |" << std::endl;
     std::cout << "---------------------+----------+----------+" << std::endl;
@@ -678,12 +713,12 @@ namespace p2psp {
     std::cout << "---------------------+-------------------+-------------------+------+----------..." << std::endl;
 
 #endif
-    
+
     int kbps_recvfrom = 0;
     int kbps_sendto = 0;
     int last_sendto_counter = -1;
     int last_recvfrom_counter = peer->GetRecvfromCounter();
-    
+
 #if not defined __IMS__
 
     int last_chunk_number = peer->GetPlayedChunk();
@@ -739,14 +774,14 @@ namespace p2psp {
       }
 
 #endif /* not defined __IMS__ */
-    
+
       std::cout
 	<< std::setw(9)
 	<< kbps_recvfrom
 	<< _RESET_COLOR();
 
 #if not defined __IMS__
-    
+
       std::cout
 	<< std::setw(9)
 	<< kbps_expected_recv;
@@ -761,22 +796,22 @@ namespace p2psp {
       }
 
 #endif /* not defined __IMS__ */
-    
+
       std::cout
 	<< std::setw(9)
 	<< kbps_sendto
 	<< _RESET_COLOR();
-	
+
 #if not defined __IMS__
-    
+
       std::cout
 	<< std::setw(9)
 	<< kbps_expected_sent;
-      
+
 #endif /* not defined __IMS__ */
-    
+
       std::cout << " |";
-    
+
 #ifndef __IMS__
 
       {
@@ -805,7 +840,7 @@ namespace p2psp {
       std::cout
 	<< std::endl;
     }
-    
+
     return 0;
   }
 
@@ -813,12 +848,12 @@ namespace p2psp {
 }
 
 int main(int argc, const char* argv[]) {
-  
+
   try {
     return p2psp::run(argc, argv);
   } catch (boost::system::system_error e) {
     TRACE(e.what());
   }
   return -1;
-  
+
 }
