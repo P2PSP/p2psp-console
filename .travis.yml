@@ -17,7 +17,7 @@ before_script:
 - cd core
 #- git checkout iss111
 - yes | ./make.py
-- cd ../p2psp-console
+- cd ../console
 #- git checkout iss12 
 script: ./make.py
 notifications:
