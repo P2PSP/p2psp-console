@@ -107,7 +107,7 @@ int main(int argc, const char *argv[]) {
       "Using DBS.\n"
 #endif
          "Parameters";
-  
+
   boost::program_options::options_description desc(description);
 
   //~ {
@@ -148,7 +148,8 @@ int main(int argc, const char *argv[]) {
 #if defined __IMS__
       ("TTL", boost::program_options::value<int>()->default_value(TTL), "Time To Live of the multicast messages.")
 #endif
-      ("splitter_port", boost::program_options::value<int>()->default_value(splitter_port), "Port to serve the peers.");
+      ("splitter_port", boost::program_options::value<int>()->default_value(splitter_port), "Port to serve the peers.")
+      ("smart_source_client", boost::program_options::value<bool>()->default_value(false), "Connect to smart Source Client");
 
 
   boost::program_options::variables_map vm;
@@ -174,15 +175,15 @@ int main(int argc, const char *argv[]) {
 #if defined __IMS__
   std::cout << "Using Splitter_IMS" << std::endl;
 #endif /* __IMS__ */
-  
+
 #if defined __DBS__
   std::cout << "Using Splitter_DBS" << std::endl;
 #endif /* __DBS__  */
-  
+
 #if defined __LRS__
   std::cout << "Using Splitter_LRS" << std::endl;
 #endif /* __LRS__ */
-  
+
 #if defined __NTS__
   std::cout << "Using Splitter_NTS" << std::endl;
 #endif /* __NTS__ */
@@ -190,7 +191,15 @@ int main(int argc, const char *argv[]) {
 #if defined __EMS__
   std::cout << "Using Splitter_EMS" << std::endl;
 #endif /* __EMS__ */
-  
+
+  if (vm.count("smart_source_client")) {
+    // {{{
+
+    splitter.setSmartSourceClient(vm["smart_source_client"].as<bool>());
+    TRACE("smart_source_client = " << splitter.isSmartSourceClient());
+
+    // }}}
+  }
 
   if (vm.count("buffer_size")) {
     // {{{
@@ -198,7 +207,7 @@ int main(int argc, const char *argv[]) {
     splitter.SetBufferSize(vm["buffer_size"].as<int>());
     TRACE("Buffer size = "
 	  << splitter.GetBufferSize());
-    
+
     // }}}
   }
 
@@ -208,7 +217,7 @@ int main(int argc, const char *argv[]) {
     splitter.SetChannel(vm["channel"].as<std::string>());
     TRACE("Channel = "
 	  << splitter.GetChannel());
-    
+
     // }}}
   }
 
@@ -218,7 +227,7 @@ int main(int argc, const char *argv[]) {
     splitter.SetChunkSize(vm["chunk_size"].as<int>());
     TRACE("Chunk size = "
 	  << splitter.GetChunkSize());
-    
+
     // }}}
   }
 
@@ -228,7 +237,7 @@ int main(int argc, const char *argv[]) {
     splitter.SetHeaderSize(vm["header_size"].as<int>());
     TRACE("Header size = "
 	  << splitter.GetHeaderSize());
-    
+
     // }}}
   }
 
@@ -242,7 +251,7 @@ int main(int argc, const char *argv[]) {
     splitter.SetMcastAddr(vm["mcast_addr"].as<std::string>());
     TRACE("IP multicast address = "
 	  << splitter.GetMcastAddr());
-    
+
     // }}}
   }
 
@@ -252,7 +261,7 @@ int main(int argc, const char *argv[]) {
     splitter.SetMcastPort(vm["mcast_port"].as<int>());
     TRACE("IP multicast port = "
 	  << splitter.GetMcastPort());
-    
+
     // }}}
   }
 
@@ -266,7 +275,7 @@ int main(int argc, const char *argv[]) {
     splitter.SetSplitterPort(vm["splitter_port"].as<int>());
     TRACE("Splitter port = "
 	  << splitter.GetSplitterPort());
-    
+
     // }}}
   }
 
@@ -276,7 +285,7 @@ int main(int argc, const char *argv[]) {
     splitter.SetSourceAddr(vm["source_addr"].as<std::string>());
     TRACE("Source address = "
 	  << splitter.GetSourceAddr());
-    
+
     // }}}
   }
 
@@ -286,12 +295,12 @@ int main(int argc, const char *argv[]) {
     splitter.SetSourcePort(vm["source_port"].as<int>());
     TRACE("Source port = "
 	  << splitter.GetSourcePort());
-    
+
     // }}}
   }
 
 #if not defined __IMS__
-  
+
   // {{{
 
   if (vm.count("max_number_of_chunk_loss")) {
@@ -310,7 +319,7 @@ int main(int argc, const char *argv[]) {
     splitter.SetNumberOfMonitors(vm["number_of_monitors"].as<int>());
     TRACE("Number of monitors = "
 	  << splitter.GetNumberOfMonitors());
-    
+
     // }}}
   }
 
@@ -322,7 +331,7 @@ int main(int argc, const char *argv[]) {
   splitter.Start();
 
   std::cout << _RESET_COLOR();
-  
+
 #if defined __IMS__
   std::cout << "                     | Received |     Sent |" << std::endl;
   std::cout << "                Time |   (kbps) |   (kbps) |" << std::endl;
@@ -332,7 +341,7 @@ int main(int argc, const char *argv[]) {
   std::cout << "                Time |   (kbps) |   (kbps) | size | (peer chunks-lost/sent)" << std::endl;
   std::cout << "---------------------+----------+----------+------+------------------..." << std::endl;
 #endif
-  
+
   int last_sendto_counter = splitter.GetSendToCounter();
   int last_recvfrom_counter = splitter.GetRecvFromCounter();
 
@@ -343,7 +352,7 @@ int main(int argc, const char *argv[]) {
 #if not defined __IMS__
   std::vector<boost::asio::ip::udp::endpoint> peer_list;
 #endif
-  
+
   // Listen to Ctrl-C interruption
   struct sigaction sigIntHandler;
   sigIntHandler.sa_handler = HandlerCtrlC;
@@ -352,7 +361,7 @@ int main(int argc, const char *argv[]) {
   sigaction(SIGINT, &sigIntHandler, NULL);
 
   while (splitter.isAlive()) {
-    
+
     boost::this_thread::sleep(boost::posix_time::milliseconds(1000));
 
     { /* Print current time */
@@ -363,7 +372,7 @@ int main(int argc, const char *argv[]) {
       ptime todayUtc(day_clock::universal_day(), second_clock::universal_time().time_of_day());
       std::cout << to_simple_string(todayUtc);
     }
-    
+
     chunks_sendto = splitter.GetSendToCounter() - last_sendto_counter;
     kbps_sendto = (chunks_sendto * splitter.GetChunkSize() * 8) / 1000;
     chunks_recvfrom = splitter.GetRecvFromCounter() - last_recvfrom_counter;
@@ -380,21 +389,21 @@ int main(int argc, const char *argv[]) {
 #if not defined __IMS__
     peer_list = splitter.GetPeerList();
     //O("Size peer list: " << peer_list.size());
-    
+
     std::cout
       << std::setw(5)
       << peer_list.size()
       << " |";
-	
+
     std::vector<boost::asio::ip::udp::endpoint>::iterator it;
     for (it = peer_list.begin(); it != peer_list.end(); ++it) {
-      
+
       std::cout
 	//<< _SET_COLOR(_BLUE)
       	<< ' ' << *it ;
 
       int gs = splitter.GetLoss(*it);
-      if (gs>0) 
+      if (gs>0)
 	std::cout
 	  << _SET_COLOR(_RED);
       std::cout
@@ -403,7 +412,7 @@ int main(int argc, const char *argv[]) {
 	<< "/"
 	<< chunks_sendto
 	<< _RESET_COLOR();
-      
+
       /*if (splitter_dbs->GetMagicFlags() >= p2psp::Common::kACS) { // If is ACS
       // _SET_COLOR(_YELLOW);
       O(splitter_acs->GetPeriod(*it));
@@ -414,7 +423,7 @@ int main(int argc, const char *argv[]) {
       splitter_acs->SetNumberOfSentChunksPerPeer(*it, 0);
       }*/
     }
-#endif     
+#endif
     std::cout << std::endl;
   }
 
