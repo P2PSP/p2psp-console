@@ -16,7 +16,7 @@ before_script:
 - git clone https://github.com/P2PSP/core.git
 - cd core
 #- git checkout iss111
-- ./make.py
+- yes | ./make.py
 - cd ../p2psp-console
 #- git checkout iss12 
 script: ./make.py
