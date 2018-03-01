@@ -517,9 +517,8 @@ namespace p2psp {
     peer->RequestHeader();
     TRACE("Header requested");
 
-    std::cout << "Relaying the header from the source to the player ... " << std::flush;
     peer->RelayHeader();
-    std::cout << "done" << std::endl;
+    TRACE("Header relayed");
     
     peer->ReceiveChunkSize();
     TRACE("Chunk size = "
@@ -601,7 +600,6 @@ namespace p2psp {
     
     TRACE("Receiving the list of peers ... ");
     peer->ReceiveTheListOfPeers();
-    std::cout << "done" << std::endl;
     TRACE("List of peers received");
     TRACE("Number of peers in the team (excluding me) = "
 	<< std::to_string(peer->GetNumberOfPeers()));    
