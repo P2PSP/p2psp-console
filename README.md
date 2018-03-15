@@ -32,6 +32,6 @@ cd ../p2psp-console
 [I-want-to-use-it](https://github.com/P2PSP/I-want-to-use-it)
 
 ### Advanced
-[Advanced User Manual](https://github.com/P2PSP/p2psp/tree/master/doc/advanced-user-manual)
+[Advanced User Manual](https://github.com/P2PSP/I-want-to-use-it/tree/master/advanced-user-manual)
 
 
