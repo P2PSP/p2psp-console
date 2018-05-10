@@ -41,7 +41,8 @@ sys_name = platform.system()
 
 if sys_name == 'Linux' or sys_name == 'Darwin':
     print('\nMaking for Unix (Linux/Darwin/...)\n')
-    command = 'cd build && ' + cmake + ' .. && echo'
+    #command = 'cd build && cmake -DBOOST_NO_SYSTEM_PATHS=TRUE -DBOOST_ROOT="../core/boost_1_63_0" -DBOOST_INCLUDEDIR="../core/boost_1_63_0/boost_lib/include" -DBOOST_LIBRARYDIR="../core/boost_1_63_0/boost_lib/lib ..'
+    command = 'cd build && cmake -DBOOST_NO_SYSTEM_PATHS=TRUE -DBOOST_ROOT="../core/boost_1_63_0" -DBOOST_INCLUDEDIR="../core/boost_1_63_0/boost_lib/include" -DBOOST_LIBRARYDIR="../core/boost_1_63_0/boost_lib/lib" ..'
     if os.system(command) == 0:
         command = 'cd build && make'
         if not only_cmake:
