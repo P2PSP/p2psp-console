@@ -22,7 +22,7 @@ git clone git@github.com:P2PSP/p2psp-console.git
 ```
 cd core
 ./make.py
-cd ../p2psp-console
+cd ../console
 ./make.py
 ```
 
