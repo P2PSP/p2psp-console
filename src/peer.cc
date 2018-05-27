@@ -412,6 +412,7 @@ namespace p2psp {
       uint16_t player_port = Console::GetDefaultPlayerPort();
       std::string splitter_addr = p2psp::Peer_core::GetDefaultSplitterAddr().to_string();
       uint16_t splitter_port = p2psp::Peer_core::GetDefaultSplitterPort();
+      std::string channel_url="RSET url";
 #if not defined __IMS__
       int max_chunk_debt = p2psp::Peer_DBS::GetDefaultMaxChunkDebt();
       uint16_t team_port = p2psp::Peer_core::GetDefaultTeamPort();
@@ -423,6 +424,7 @@ namespace p2psp {
       // TODO: strpe option should expect a list of arguments, not bool
       desc.add_options()
         ("help,h", "Produce this help message and exits.")
+        ("channel_url",boost::program_options::value<string>()->default_value(channel_url),"Channel url to get splitter address from crossroads engine")
 #if not defined __IMS__
         ("max_chunk_debt", boost::program_options::value<int>()->default_value(max_chunk_debt), "Maximum number of times that other peer can not send a chunk to this peer.")
 #endif
@@ -501,6 +503,7 @@ namespace p2psp {
     class Console* peer = new Console();
 
     // }}}
+    
 
     if (vm.count("smart_source_client")) {
       // {{{
@@ -518,11 +521,27 @@ namespace p2psp {
 
       // }}}
     }
-
+    if (vm.count("channel_url") || true) {
+		
+		TRACE("Channel URL =  "
+		<< vm["channel_url"].as<std::string>());
+		std::string splitter_source = peer->RESTSplitter(vm["channel_url"].as<std::string>());
+		int delimeter=splitter_source.find(":");
+		std::string splitter_addr = splitter_source.substr(0,delimeter);
+		std::string splitter_port=splitter_source.substr(delimeter+1);
+		peer->SetSplitterAddr(ip::address::from_string("127.0.0.1"));
+		TRACE("Splitter address = "
+	    << peer->GetSplitterAddr());
+		peer->SetSplitterPort(std::stoi(splitter_port));
+		TRACE("Splitter port = "
+		<< peer->GetSplitterPort());
+	}
+	
     peer->WaitForThePlayer();
     std::cout
       << "Player connected"
       << std::endl;
+    
 
     if (vm.count("splitter_addr")) {
       // {{{
