@@ -521,7 +521,7 @@ namespace p2psp {
 
       // }}}
     }
-    if (vm.count("channel_url") || true) {
+    if (vm.count("channel_url")) {
 		
 		TRACE("Channel URL =  "
 		<< vm["channel_url"].as<std::string>());
