@@ -412,7 +412,7 @@ namespace p2psp {
       uint16_t player_port = Console::GetDefaultPlayerPort();
       std::string splitter_addr = p2psp::Peer_core::GetDefaultSplitterAddr().to_string();
       uint16_t splitter_port = p2psp::Peer_core::GetDefaultSplitterPort();
-      std::string channel_url="RSET url";
+      std::string channel_url;
 #if not defined __IMS__
       int max_chunk_debt = p2psp::Peer_DBS::GetDefaultMaxChunkDebt();
       uint16_t team_port = p2psp::Peer_core::GetDefaultTeamPort();
@@ -424,7 +424,7 @@ namespace p2psp {
       // TODO: strpe option should expect a list of arguments, not bool
       desc.add_options()
         ("help,h", "Produce this help message and exits.")
-        ("channel_url",boost::program_options::value<string>()->default_value(channel_url),"Channel url to get splitter address from crossroads engine")
+        ("channel_url","Channel url to get splitter address from crossroads engine")
 #if not defined __IMS__
         ("max_chunk_debt", boost::program_options::value<int>()->default_value(max_chunk_debt), "Maximum number of times that other peer can not send a chunk to this peer.")
 #endif
