@@ -424,7 +424,7 @@ namespace p2psp {
       // TODO: strpe option should expect a list of arguments, not bool
       desc.add_options()
         ("help,h", "Produce this help message and exits.")
-        ("channel_url","Channel url to get splitter address from crossroads engine")
+        ("channel_url", boost::program_options::value<std::string>(), "Channel url to get splitter address from crossroads engine")
 #if not defined __IMS__
         ("max_chunk_debt", boost::program_options::value<int>()->default_value(max_chunk_debt), "Maximum number of times that other peer can not send a chunk to this peer.")
 #endif
