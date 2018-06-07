@@ -543,7 +543,7 @@ namespace p2psp {
       << std::endl;
     
 
-    if (vm.count("splitter_addr")) {
+    if (vm.count("splitter_addr") && !(vm.count("channel_url"))) {
       // {{{
 
       peer->SetSplitterAddr(ip::address::from_string(vm["splitter_addr"].as<std::string>()));
@@ -553,7 +553,7 @@ namespace p2psp {
       // }}}
     }
 
-    if (vm.count("splitter_port")) {
+    if (vm.count("splitter_port") && !(vm.count("channel_url"))) {
       // {{{
 
       peer->SetSplitterPort(vm["splitter_port"].as<uint16_t>());
