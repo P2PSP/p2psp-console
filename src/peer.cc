@@ -105,7 +105,6 @@ namespace p2psp {
 #endif /* __monitor__ */
 #endif /* __NTS__ */
 
-
 #if defined __EMS__
 #if defined __monitor__
     public Monitor_EMS
